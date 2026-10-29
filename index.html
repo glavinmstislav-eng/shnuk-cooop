@@ -2,14 +2,17 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
 <title>Shnuk Cooop Share</title>
 <style>
   @font-face {
     font-family: 'TT_Paplane';
-    src: local('TT Paplane Trial Regular'), local('TT_Paplane_Trial_Regular'), local('Courier New');
+    src: url('TT_Paplane_Trial_Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
+    font-display: swap;
   }
 
   * {
@@ -17,6 +20,7 @@
     margin: 0;
     padding: 0;
     border-radius: 0;
+    -webkit-tap-highlight-color: transparent;
   }
 
   :root {
@@ -36,8 +40,11 @@
     background-color: var(--shnuk-bg);
     color: var(--shnuk-black);
     padding: 16px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
     line-height: 1.5;
     font-size: 14px;
+    -webkit-text-size-adjust: 100%;
   }
 
   .page {
@@ -83,6 +90,8 @@
     cursor: pointer;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   button.shnuk-btn:disabled {
@@ -104,6 +113,8 @@
     cursor: pointer;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   button.ghost-btn:active {
@@ -119,6 +130,9 @@
     background-color: var(--shnuk-bg);
     color: var(--shnuk-black);
     outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 0;
   }
 
   input[type="text"]:focus {
@@ -151,6 +165,7 @@
     letter-spacing: 0.5px;
     text-transform: uppercase;
     user-select: none;
+    -webkit-user-select: none;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -185,6 +200,7 @@
     padding: 12px;
     cursor: pointer;
     user-select: none;
+    -webkit-user-select: none;
   }
 
   .server-option.selected {
@@ -217,6 +233,7 @@
     margin-top: 12px;
     max-height: 220px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     border: none;
     padding: 10px;
     font-size: 12px;
@@ -242,6 +259,7 @@
     color: var(--shnuk-gray);
     font-size: 12px;
     padding: 8px 0 24px;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
   }
 
   .meta {
@@ -268,12 +286,100 @@
     text-decoration: underline;
   }
 
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 1000;
+  }
+
+  .modal-overlay.hidden {
+    display: none;
+  }
+
+  .modal {
+    background-color: var(--shnuk-white);
+    max-width: 520px;
+    width: 100%;
+    padding: 20px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  }
+
+  .modal-title {
+    background-color: var(--shnuk-red);
+    color: var(--shnuk-white);
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 14px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .modal-text {
+    margin-bottom: 14px;
+    font-size: 13px;
+  }
+
+  .modal-text strong {
+    color: var(--shnuk-red);
+  }
+
+  .agree-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .agree-row input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    margin-top: 2px;
+    accent-color: var(--shnuk-red);
+    cursor: pointer;
+  }
+
+  .agree-row span {
+    font-size: 13px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
   @media (max-width: 520px) {
     body {
       padding: 10px;
+      padding-left: max(10px, env(safe-area-inset-left));
+      padding-right: max(10px, env(safe-area-inset-right));
     }
     .window {
       padding: 14px;
+    }
+    .modal {
+      padding: 16px;
+    }
+    .modal-actions {
+      justify-content: stretch;
+    }
+    .modal-actions button {
+      flex: 1 1 auto;
     }
   }
 </style>
@@ -284,7 +390,7 @@
   <div class="window">
     <div class="window-title">Загрузка файла</div>
     <p class="muted" style="margin-bottom:12px;">
-      Файл сжимается, кодируется в base64 и разбивается на чанки по 700 КБ.
+      Файл кодируется в base64 (при поддержке — со сжатием gzip) и разбивается на чанки по 700 КБ.
       Каждый чанк сохраняется в Realtime Database выбранного сервера.
       После загрузки вы получите ссылку, по которой файл можно восстановить.
     </p>
@@ -327,6 +433,34 @@
   </div>
 
   <div class="footer">By GLavin</div>
+</div>
+
+<div class="modal-overlay hidden" id="warningOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="warningTitle">
+    <div class="modal-title" id="warningTitle">Внимание</div>
+    <div class="modal-text">
+      <p style="margin-bottom:10px;">
+        <strong>Ни в коем случае не загружайте персональные данные.</strong>
+      </p>
+      <p style="margin-bottom:10px;">
+        Не публикуйте паспортные данные, номера телефонов, адреса, платёжную информацию,
+        медицинские сведения, фотографии документов и любые другие сведения, которые могут
+        идентифицировать вас или третьих лиц.
+      </p>
+      <p>
+        Загруженный файл сохраняется в открытой базе данных и доступен по ссылке всем,
+        у кого она есть. Ответственность за содержимое файла несёт пользователь.
+      </p>
+    </div>
+    <label class="agree-row" for="agreeCheckbox">
+      <input type="checkbox" id="agreeCheckbox">
+      <span>Я подтверждаю, что файл не содержит персональных данных, и принимаю ответственность за его содержимое.</span>
+    </label>
+    <div class="modal-actions">
+      <button class="ghost-btn" id="cancelUploadBtn">Отмена</button>
+      <button class="shnuk-btn" id="confirmUploadBtn" disabled>Продолжить</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -404,10 +538,14 @@
     if (typeof CompressionStream === "undefined") {
       return { data: bytes, compressed: false };
     }
-    const cs = new CompressionStream("gzip");
-    const stream = new Blob([bytes]).stream().pipeThrough(cs);
-    const buffer = await new Response(stream).arrayBuffer();
-    return { data: new Uint8Array(buffer), compressed: true };
+    try {
+      const cs = new CompressionStream("gzip");
+      const stream = new Blob([bytes]).stream().pipeThrough(cs);
+      const buffer = await new Response(stream).arrayBuffer();
+      return { data: new Uint8Array(buffer), compressed: true };
+    } catch (error) {
+      return { data: bytes, compressed: false };
+    }
   }
 
   function makeFileId() {
@@ -427,6 +565,11 @@
   const linkValue = document.getElementById("linkValue");
   const copyLinkBtn = document.getElementById("copyLinkBtn");
   const openLinkBtn = document.getElementById("openLinkBtn");
+
+  const warningOverlay = document.getElementById("warningOverlay");
+  const agreeCheckbox = document.getElementById("agreeCheckbox");
+  const confirmUploadBtn = document.getElementById("confirmUploadBtn");
+  const cancelUploadBtn = document.getElementById("cancelUploadBtn");
 
   let selectedServer = "usa";
   let selectedFile = null;
@@ -459,8 +602,35 @@
     setProgress(progressFill, 0);
   });
 
-  uploadBtn.addEventListener("click", async () => {
+  agreeCheckbox.addEventListener("change", () => {
+    confirmUploadBtn.disabled = !agreeCheckbox.checked;
+  });
+
+  cancelUploadBtn.addEventListener("click", () => {
+    warningOverlay.classList.add("hidden");
+    agreeCheckbox.checked = false;
+    confirmUploadBtn.disabled = true;
+  });
+
+  warningOverlay.addEventListener("click", (event) => {
+    if (event.target === warningOverlay) {
+      warningOverlay.classList.add("hidden");
+      agreeCheckbox.checked = false;
+      confirmUploadBtn.disabled = true;
+    }
+  });
+
+  uploadBtn.addEventListener("click", () => {
     if (!selectedFile) return;
+    agreeCheckbox.checked = false;
+    confirmUploadBtn.disabled = true;
+    warningOverlay.classList.remove("hidden");
+  });
+
+  confirmUploadBtn.addEventListener("click", async () => {
+    if (!agreeCheckbox.checked || !selectedFile) return;
+    warningOverlay.classList.add("hidden");
+
     uploadBtn.disabled = true;
     fileInput.disabled = true;
     serversBox.style.pointerEvents = "none";
@@ -550,18 +720,37 @@
   copyLinkBtn.addEventListener("click", async () => {
     const text = openLinkBtn.href;
     if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      copyLinkBtn.textContent = "Скопировано";
-      setTimeout(() => {
-        copyLinkBtn.textContent = "Скопировать ссылку";
-      }, 1500);
-    } catch (error) {
-      copyLinkBtn.textContent = "Не удалось";
-      setTimeout(() => {
-        copyLinkBtn.textContent = "Скопировать ссылку";
-      }, 1500);
+    let copied = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      } catch (error) {
+        copied = false;
+      }
     }
+    if (!copied) {
+      try {
+        const helper = document.createElement("textarea");
+        helper.value = text;
+        helper.setAttribute("readonly", "");
+        helper.style.position = "fixed";
+        helper.style.top = "-1000px";
+        helper.style.opacity = "0";
+        document.body.appendChild(helper);
+        helper.select();
+        helper.setSelectionRange(0, helper.value.length);
+        document.execCommand("copy");
+        document.body.removeChild(helper);
+        copied = true;
+      } catch (error) {
+        copied = false;
+      }
+    }
+    copyLinkBtn.textContent = copied ? "Скопировано" : "Не удалось";
+    setTimeout(() => {
+      copyLinkBtn.textContent = "Скопировать ссылку";
+    }, 1500);
   });
 </script>
 </body>
