@@ -2,130 +2,567 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Shnuk — выборы</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shnuk Cooop Share</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
+  @font-face {
+    font-family: 'TT_Paplane';
+    src: local('TT Paplane Trial Regular'), local('TT_Paplane_Trial_Regular'), local('Courier New');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  * {
+    box-sizing: border-box;
     margin: 0;
-    padding: 20px;
-    color: #222;
+    padding: 0;
+    border-radius: 0;
   }
-  h1 { text-align: center; }
-  .card {
-    background: #fff;
-    padding: 20px;
-    max-width: 1000px;
-    margin: 0 auto 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+
+  :root {
+    --shnuk-red: #d92121;
+    --shnuk-black: #111111;
+    --shnuk-gray: #8a8a8a;
+    --shnuk-white: #ffffff;
+    --shnuk-bg: #e8e8e8;
   }
-  table {
+
+  html, body {
+    min-height: 100%;
+  }
+
+  body {
+    font-family: 'TT_Paplane', 'Courier New', monospace;
+    background-color: var(--shnuk-bg);
+    color: var(--shnuk-black);
+    padding: 16px;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+
+  .page {
+    max-width: 920px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .window {
+    background-color: var(--shnuk-white);
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  .window-title {
+    background-color: var(--shnuk-red);
+    color: var(--shnuk-white);
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 14px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .muted {
+    color: var(--shnuk-gray);
+  }
+
+  .accent {
+    color: var(--shnuk-red);
+  }
+
+  button.shnuk-btn {
+    font-family: inherit;
+    font-size: 14px;
+    background-color: var(--shnuk-red);
+    color: var(--shnuk-white);
+    border: none;
+    padding: 10px 18px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  button.shnuk-btn:disabled {
+    background-color: var(--shnuk-gray);
+    cursor: not-allowed;
+  }
+
+  button.shnuk-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  button.ghost-btn {
+    font-family: inherit;
+    font-size: 14px;
+    background-color: var(--shnuk-bg);
+    color: var(--shnuk-black);
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  button.ghost-btn:active {
+    transform: translateY(1px);
+  }
+
+  input[type="text"] {
+    font-family: inherit;
+    font-size: 14px;
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+    padding: 10px 12px;
+    border: none;
+    background-color: var(--shnuk-bg);
+    color: var(--shnuk-black);
+    outline: none;
   }
-  th, td {
-    border: 1px solid #ddd;
-    padding: 8px 10px;
+
+  input[type="text"]:focus {
+    background-color: #dedede;
+  }
+
+  .file-input-wrap {
+    position: relative;
+    flex: 1 1 220px;
+  }
+
+  .file-input-wrap input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .file-label {
+    display: block;
+    font-family: inherit;
+    font-size: 14px;
+    width: 100%;
+    padding: 10px 12px;
+    background-color: var(--shnuk-bg);
+    color: var(--shnuk-black);
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-label:active {
+    background-color: #dedede;
+  }
+
+  .row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .row > .grow {
+    flex: 1 1 220px;
+  }
+
+  .servers {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .server-option {
+    flex: 1 1 200px;
+    border: none;
+    background-color: var(--shnuk-bg);
+    padding: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .server-option.selected {
+    background-color: #fff5f5;
+  }
+
+  .server-option .server-name {
+    color: var(--shnuk-red);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 18px;
+    border: none;
+    background-color: var(--shnuk-bg);
+    margin-top: 12px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--shnuk-red);
+    transition: width 0.15s linear;
+  }
+
+  .log {
+    margin-top: 12px;
+    max-height: 220px;
+    overflow-y: auto;
+    border: none;
+    padding: 10px;
+    font-size: 12px;
+    background-color: #f5f5f5;
+  }
+
+  .log-line {
+    padding: 2px 0;
+    border-bottom: 1px dashed #ddd;
+    word-break: break-all;
+  }
+
+  .log-line:last-child {
+    border-bottom: none;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .footer {
     text-align: center;
+    color: var(--shnuk-gray);
+    font-size: 12px;
+    padding: 8px 0 24px;
   }
-  th { background: #f0f0f0; }
-  .avg { font-weight: bold; background: #fafafa; }
+
+  .meta {
+    font-size: 12px;
+    color: var(--shnuk-gray);
+    margin-top: 6px;
+  }
+
+  .link-box {
+    margin-top: 12px;
+    padding: 14px;
+    border: none;
+    background-color: #fff5f5;
+    font-size: 14px;
+    word-break: break-all;
+  }
+
+  .link-box a {
+    color: var(--shnuk-red);
+    text-decoration: none;
+  }
+
+  .link-box a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 520px) {
+    body {
+      padding: 10px;
+    }
+    .window {
+      padding: 14px;
+    }
+  }
 </style>
 </head>
 <body>
+<div class="page">
 
-<h1>Компания Shnuk — выборы 1 и 2</h1>
+  <div class="window">
+    <div class="window-title">Загрузка файла</div>
+    <p class="muted" style="margin-bottom:12px;">
+      Файл сжимается, кодируется в base64 и разбивается на чанки по 700 КБ.
+      Каждый чанк сохраняется в Realtime Database выбранного сервера.
+      После загрузки вы получите ссылку, по которой файл можно восстановить.
+    </p>
 
-<div class="card">
-  <canvas id="chart" height="120"></canvas>
+    <div class="servers" id="serversBox">
+      <div class="server-option selected" data-server="usa">
+        <div class="server-name">Американский сервер</div>
+        <div class="muted">cooop-usa</div>
+      </div>
+      <div class="server-option" data-server="belgium">
+        <div class="server-name">Бельгийский сервер</div>
+        <div class="muted">cooop-2</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="file-input-wrap">
+        <input type="file" id="fileInput">
+        <label class="file-label" id="fileLabel" for="fileInput">Выбрать файл</label>
+      </div>
+      <button class="shnuk-btn" id="uploadBtn" disabled>Загрузить</button>
+    </div>
+
+    <div class="meta" id="fileMeta">Файл не выбран</div>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="log hidden" id="uploadLog"></div>
+
+    <div class="link-box hidden" id="linkBox">
+      <div style="font-size:12px;color:var(--shnuk-gray);margin-bottom:6px;">Ссылка для скачивания:</div>
+      <div id="linkValue"></div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="ghost-btn" id="copyLinkBtn">Скопировать ссылку</button>
+        <a class="ghost-btn" id="openLinkBtn" href="#" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;">Открыть</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">By GLavin</div>
 </div>
 
-<div class="card">
-  <h2>Результаты выборов</h2>
-  <table id="avgTable">
-    <thead>
-      <tr>
-        <th>Партия</th>
-        <th>Выборы 1</th>
-        <th>Выборы 2</th>
-        <th>Средний %</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    set
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-<script>
-const elections = [1, 2];
+  const CHUNK_SIZE = 700000;
+  const ROOT_PATH = "shnuk_share";
+  const READ_PAGE = "shnuk-cooop-read.html";
 
-const parties = {
-  "Единый Шнюк":            [66.67, 76.47],
-  "Партия Русского языка":  [33.33, 17.65],
-  "Вольга Святославич":     [null,  5.88]
-};
-
-const colors = {
-  "Единый Шнюк":            "#e74c3c",
-  "Партия Русского языка":  "#3498db",
-  "Вольга Святославич":     "#9b59b6"
-};
-
-// --- График ---
-const datasets = Object.keys(parties).map(name => ({
-  label: name,
-  data: parties[name],
-  borderColor: colors[name],
-  backgroundColor: colors[name] + "33",
-  borderWidth: 3,
-  tension: 0,
-  spanGaps: true,
-  pointRadius: 4,
-  pointHoverRadius: 6
-}));
-
-new Chart(document.getElementById("chart"), {
-  type: "line",
-  data: {
-    labels: elections.map(n => "Выборы " + n),
-    datasets: datasets
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      title: {
-        display: true,
-        text: "Результаты выборов Shnuk (%)",
-        font: { size: 16 }
-      },
-      legend: { position: "bottom" }
+  const servers = {
+    usa: {
+      label: "Американский сервер",
+      config: {
+        apiKey: "AIzaSyBFtvBFyJesPf7LvqtTAS7eCuMKZ6c4sDo",
+        authDomain: "cooop-usa.firebaseapp.com",
+        projectId: "cooop-usa",
+        storageBucket: "cooop-usa.firebasestorage.app",
+        messagingSenderId: "735946760663",
+        appId: "1:735946760663:web:0d9baa05dc2ce81e0ceb92",
+        measurementId: "G-KCK35DJZBN"
+      }
     },
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 100,
-        title: { display: true, text: "Процент голосов" }
-      },
-      x: {
-        title: { display: true, text: "Выборы" }
+    belgium: {
+      label: "Бельгийский сервер",
+      config: {
+        apiKey: "AIzaSyBHOK1-loW6y_USglDZRSHdf2pTlMLEFTA",
+        authDomain: "cooop-2.firebaseapp.com",
+        projectId: "cooop-2",
+        storageBucket: "cooop-2.firebasestorage.app",
+        messagingSenderId: "1084008409260",
+        appId: "1:1084008409260:web:71a0d108d995fb86425709",
+        measurementId: "G-H0X18GC6TJ"
       }
     }
+  };
+
+  const dbCache = {};
+
+  function getDb(serverKey) {
+    if (!dbCache[serverKey]) {
+      const app = initializeApp(servers[serverKey].config, "app_" + serverKey);
+      dbCache[serverKey] = getDatabase(app);
+    }
+    return dbCache[serverKey];
   }
-});
 
-// --- Таблица ---
-const tbody = document.querySelector("#avgTable tbody");
-Object.keys(parties).forEach(name => {
-  const values = parties[name].filter(v => v !== null);
-  const avg = values.reduce((a, b) => a + b, 0) / values.length;
-  const v1 = parties[name][0] !== null ? parties[name][0].toFixed(2) + "%" : "—";
-  const v2 = parties[name][1] !== null ? parties[name][1].toFixed(2) + "%" : "—";
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td>${name}</td><td>${v1}</td><td>${v2}</td><td class="avg">${avg.toFixed(2)}%</td>`;
-  tbody.appendChild(tr);
-});
+  function log(box, message) {
+    box.classList.remove("hidden");
+    const line = document.createElement("div");
+    line.className = "log-line";
+    line.textContent = message;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function setProgress(fill, percent) {
+    fill.style.width = Math.max(0, Math.min(100, percent)) + "%";
+  }
+
+  function bytesToBase64(bytes) {
+    let binary = "";
+    const step = 0x8000;
+    for (let i = 0; i < bytes.length; i += step) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + step));
+    }
+    return btoa(binary);
+  }
+
+  async function compressBytes(bytes) {
+    if (typeof CompressionStream === "undefined") {
+      return { data: bytes, compressed: false };
+    }
+    const cs = new CompressionStream("gzip");
+    const stream = new Blob([bytes]).stream().pipeThrough(cs);
+    const buffer = await new Response(stream).arrayBuffer();
+    return { data: new Uint8Array(buffer), compressed: true };
+  }
+
+  function makeFileId() {
+    const ts = Date.now().toString(36);
+    const rnd = Math.random().toString(36).slice(2, 10);
+    return ts + rnd;
+  }
+
+  const serversBox = document.getElementById("serversBox");
+  const fileInput = document.getElementById("fileInput");
+  const fileLabel = document.getElementById("fileLabel");
+  const uploadBtn = document.getElementById("uploadBtn");
+  const fileMeta = document.getElementById("fileMeta");
+  const progressFill = document.getElementById("progressFill");
+  const uploadLog = document.getElementById("uploadLog");
+  const linkBox = document.getElementById("linkBox");
+  const linkValue = document.getElementById("linkValue");
+  const copyLinkBtn = document.getElementById("copyLinkBtn");
+  const openLinkBtn = document.getElementById("openLinkBtn");
+
+  let selectedServer = "usa";
+  let selectedFile = null;
+
+  serversBox.addEventListener("click", (event) => {
+    const option = event.target.closest(".server-option");
+    if (!option) return;
+    serversBox.querySelectorAll(".server-option").forEach((el) => {
+      el.classList.remove("selected");
+    });
+    option.classList.add("selected");
+    selectedServer = option.dataset.server;
+  });
+
+  fileInput.addEventListener("change", () => {
+    selectedFile = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+    if (selectedFile) {
+      fileLabel.textContent = selectedFile.name;
+      fileMeta.textContent =
+        "Выбран: " + selectedFile.name + " (" + selectedFile.size + " байт)";
+      uploadBtn.disabled = false;
+    } else {
+      fileLabel.textContent = "Выбрать файл";
+      fileMeta.textContent = "Файл не выбран";
+      uploadBtn.disabled = true;
+    }
+    linkBox.classList.add("hidden");
+    uploadLog.classList.add("hidden");
+    uploadLog.innerHTML = "";
+    setProgress(progressFill, 0);
+  });
+
+  uploadBtn.addEventListener("click", async () => {
+    if (!selectedFile) return;
+    uploadBtn.disabled = true;
+    fileInput.disabled = true;
+    serversBox.style.pointerEvents = "none";
+    linkBox.classList.add("hidden");
+    uploadLog.innerHTML = "";
+    setProgress(progressFill, 0);
+
+    const serverKey = selectedServer;
+    const db = getDb(serverKey);
+    const fileId = makeFileId();
+    const basePath = ROOT_PATH + "/" + fileId;
+
+    try {
+      log(uploadLog, "Сервер: " + servers[serverKey].label);
+      log(uploadLog, "Чтение файла...");
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      let bytes = new Uint8Array(arrayBuffer);
+      log(uploadLog, "Исходный размер: " + bytes.length + " байт");
+
+      log(uploadLog, "Сжатие...");
+      const compressedResult = await compressBytes(bytes);
+      bytes = compressedResult.data;
+      log(
+        uploadLog,
+        compressedResult.compressed
+          ? "Сжатие gzip выполнено. Размер: " + bytes.length + " байт"
+          : "Сжатие недоступно, файл без сжатия. Размер: " + bytes.length + " байт"
+      );
+
+      log(uploadLog, "Кодирование base64...");
+      const base64 = bytesToBase64(bytes);
+      log(uploadLog, "Длина base64: " + base64.length + " символов");
+
+      const chunks = [];
+      for (let i = 0; i < base64.length; i += CHUNK_SIZE) {
+        chunks.push(base64.slice(i, i + CHUNK_SIZE));
+      }
+      log(uploadLog, "Чанков: " + chunks.length);
+
+      await set(ref(db, basePath + "/meta"), {
+        name: selectedFile.name,
+        type: selectedFile.type || "application/octet-stream",
+        size: selectedFile.size,
+        compressed: compressedResult.compressed,
+        chunks: chunks.length,
+        chunkSize: CHUNK_SIZE,
+        createdAt: Date.now(),
+        server: serverKey
+      });
+
+      for (let i = 0; i < chunks.length; i++) {
+        await set(ref(db, basePath + "/chunk_" + i), chunks[i]);
+        const percent = ((i + 1) / chunks.length) * 100;
+        setProgress(progressFill, percent);
+        log(uploadLog, "Записан чанк " + (i + 1) + " из " + chunks.length);
+      }
+
+      await set(ref(db, basePath + "/meta/status"), "ready");
+
+      const pageUrl = new URL(READ_PAGE, window.location.href);
+      pageUrl.searchParams.set("server", serverKey);
+      pageUrl.searchParams.set("id", fileId);
+      const shareLink = pageUrl.toString();
+
+      linkValue.innerHTML = "";
+      const anchor = document.createElement("a");
+      anchor.href = shareLink;
+      anchor.textContent = shareLink;
+      anchor.target = "_blank";
+      anchor.rel = "noopener";
+      linkValue.appendChild(anchor);
+      openLinkBtn.href = shareLink;
+
+      linkBox.classList.remove("hidden");
+      log(uploadLog, "Готово. Ссылка сформирована.");
+      setProgress(progressFill, 100);
+    } catch (error) {
+      log(uploadLog, "Ошибка: " + (error && error.message ? error.message : String(error)));
+      setProgress(progressFill, 0);
+    } finally {
+      uploadBtn.disabled = false;
+      fileInput.disabled = false;
+      serversBox.style.pointerEvents = "";
+    }
+  });
+
+  copyLinkBtn.addEventListener("click", async () => {
+    const text = openLinkBtn.href;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      copyLinkBtn.textContent = "Скопировано";
+      setTimeout(() => {
+        copyLinkBtn.textContent = "Скопировать ссылку";
+      }, 1500);
+    } catch (error) {
+      copyLinkBtn.textContent = "Не удалось";
+      setTimeout(() => {
+        copyLinkBtn.textContent = "Скопировать ссылку";
+      }, 1500);
+    }
+  });
 </script>
-
 </body>
 </html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shnuk Cooop Share — Скачивание</title>
+<style>
+  @font-face {
+    font-family: 'TT_Paplane';
+    src: local('TT Paplane Trial Regular'), local('TT_Paplane_Trial_Regular'), local('Courier New');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  :root {
+    --shnuk-red: #d92121;
+    --shnuk-black: #111111;
+    --shnuk-gray: #8a8a8a;
+    --shnuk-white: #ffffff;
+    --shnuk-bg: #e8e8e8;
+  }
+
+  html, body {
+    min-height: 100%;
+  }
+
+  body {
+    font-family: 'TT_Paplane', 'Courier New', monospace;
+    background-color: var(--shnuk-bg);
+    color: var(--shnuk-black);
+    padding: 16px;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+
+  .page {
+    max-width: 920px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .window {
+    background-color: var(--shnuk-white);
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  .window-title {
+    background-color: var(--shnuk-red);
+    color: var(--shnuk-white);
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 14px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .muted {
+    color: var(--shnuk-gray);
+  }
+
+  .accent {
+    color: var(--shnuk-red);
+  }
+
+  button.shnuk-btn {
+    font-family: inherit;
+    font-size: 14px;
+    background-color: var(--shnuk-red);
+    color: var(--shnuk-white);
+    border: none;
+    padding: 10px 18px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  button.shnuk-btn:disabled {
+    background-color: var(--shnuk-gray);
+    cursor: not-allowed;
+  }
+
+  button.shnuk-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 18px;
+    border: none;
+    background-color: var(--shnuk-bg);
+    margin-top: 12px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--shnuk-red);
+    transition: width 0.15s linear;
+  }
+
+  .log {
+    margin-top: 12px;
+    max-height: 220px;
+    overflow-y: auto;
+    border: none;
+    padding: 10px;
+    font-size: 12px;
+    background-color: #f5f5f5;
+  }
+
+  .log-line {
+    padding: 2px 0;
+    border-bottom: 1px dashed #ddd;
+    word-break: break-all;
+  }
+
+  .log-line:last-child {
+    border-bottom: none;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .footer {
+    text-align: center;
+    color: var(--shnuk-gray);
+    font-size: 12px;
+    padding: 8px 0 24px;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+
+  .meta-label {
+    color: var(--shnuk-gray);
+    font-size: 12px;
+  }
+
+  @media (max-width: 520px) {
+    body {
+      padding: 10px;
+    }
+    .window {
+      padding: 14px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="window">
+    <div class="window-title">Скачивание файла</div>
+    <p class="muted" id="statusText" style="margin-bottom:12px;">Чтение параметров ссылки...</p>
+
+    <div class="meta-row hidden" id="metaRow">
+      <div><span class="meta-label">Сервер: </span><span id="metaServer"></span></div>
+      <div><span class="meta-label">Файл: </span><span id="metaName"></span></div>
+      <div><span class="meta-label">Размер: </span><span id="metaSize"></span></div>
+    </div>
+
+    <div class="row" id="actionRow" style="display:none;">
+      <button class="shnuk-btn" id="downloadBtn">Скачать файл</button>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="downloadProgressFill"></div>
+    </div>
+
+    <div class="log hidden" id="downloadLog"></div>
+  </div>
+
+  <div class="footer">By GLavin</div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    get
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const ROOT_PATH = "shnuk_share";
+
+  const servers = {
+    usa: {
+      label: "Американский сервер",
+      config: {
+        apiKey: "AIzaSyBFtvBFyJesPf7LvqtTAS7eCuMKZ6c4sDo",
+        authDomain: "cooop-usa.firebaseapp.com",
+        projectId: "cooop-usa",
+        storageBucket: "cooop-usa.firebasestorage.app",
+        messagingSenderId: "735946760663",
+        appId: "1:735946760663:web:0d9baa05dc2ce81e0ceb92",
+        measurementId: "G-KCK35DJZBN"
+      }
+    },
+    belgium: {
+      label: "Бельгийский сервер",
+      config: {
+        apiKey: "AIzaSyBHOK1-loW6y_USglDZRSHdf2pTlMLEFTA",
+        authDomain: "cooop-2.firebaseapp.com",
+        projectId: "cooop-2",
+        storageBucket: "cooop-2.firebasestorage.app",
+        messagingSenderId: "1084008409260",
+        appId: "1:1084008409260:web:71a0d108d995fb86425709",
+        measurementId: "G-H0X18GC6TJ"
+      }
+    }
+  };
+
+  const dbCache = {};
+
+  function getDb(serverKey) {
+    if (!dbCache[serverKey]) {
+      const app = initializeApp(servers[serverKey].config, "app_" + serverKey);
+      dbCache[serverKey] = getDatabase(app);
+    }
+    return dbCache[serverKey];
+  }
+
+  function log(box, message) {
+    box.classList.remove("hidden");
+    const line = document.createElement("div");
+    line.className = "log-line";
+    line.textContent = message;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function setProgress(fill, percent) {
+    fill.style.width = Math.max(0, Math.min(100, percent)) + "%";
+  }
+
+  function base64ToBytes(b64) {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  async function decompressBytes(bytes) {
+    if (typeof DecompressionStream === "undefined") {
+      throw new Error("Браузер не поддерживает распаковку gzip");
+    }
+    const ds = new DecompressionStream("gzip");
+    const stream = new Blob([bytes]).stream().pipeThrough(ds);
+    const buffer = await new Response(stream).arrayBuffer();
+    return new Uint8Array(buffer);
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + " байт";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " КБ";
+    return (bytes / (1024 * 1024)).toFixed(2) + " МБ";
+  }
+
+  const statusText = document.getElementById("statusText");
+  const metaRow = document.getElementById("metaRow");
+  const metaServer = document.getElementById("metaServer");
+  const metaName = document.getElementById("metaName");
+  const metaSize = document.getElementById("metaSize");
+  const actionRow = document.getElementById("actionRow");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const downloadProgressFill = document.getElementById("downloadProgressFill");
+  const downloadLog = document.getElementById("downloadLog");
+
+  const params = new URLSearchParams(window.location.search);
+  const serverKey = params.get("server");
+  const fileId = params.get("id");
+
+  let meta = null;
+  let db = null;
+  let basePath = null;
+
+  async function init() {
+    if (!serverKey || !fileId) {
+      statusText.textContent = "Ссылка неполная: отсутствует сервер или идентификатор файла.";
+      return;
+    }
+    if (!servers[serverKey]) {
+      statusText.textContent = "Неизвестный сервер: " + serverKey;
+      return;
+    }
+    if (!/^[a-z0-9]+$/i.test(fileId)) {
+      statusText.textContent = "Неверный идентификатор файла.";
+      return;
+    }
+
+    statusText.textContent = "Чтение метаданных...";
+    db = getDb(serverKey);
+    basePath = ROOT_PATH + "/" + fileId;
+
+    try {
+      const metaSnap = await get(ref(db, basePath + "/meta"));
+      if (!metaSnap.exists()) {
+        statusText.textContent = "Файл не найден на сервере.";
+        return;
+      }
+      meta = metaSnap.val();
+      if (!meta || !meta.chunks) {
+        statusText.textContent = "Метаданные повреждены.";
+        return;
+      }
+
+      statusText.textContent = "Файл готов к скачиванию.";
+      metaServer.textContent = servers[serverKey].label;
+      metaName.textContent = meta.name || "без имени";
+      metaSize.textContent = formatSize(meta.size || 0);
+      metaRow.classList.remove("hidden");
+      actionRow.style.display = "block";
+    } catch (error) {
+      statusText.textContent =
+        "Ошибка чтения: " + (error && error.message ? error.message : String(error));
+    }
+  }
+
+  downloadBtn.addEventListener("click", async () => {
+    if (!meta || !db || !basePath) return;
+    downloadBtn.disabled = true;
+    downloadLog.innerHTML = "";
+    setProgress(downloadProgressFill, 0);
+
+    try {
+      log(downloadLog, "Сервер: " + servers[serverKey].label);
+      log(downloadLog, "Чанков: " + meta.chunks);
+
+      const parts = [];
+      for (let i = 0; i < meta.chunks; i++) {
+        const chunkSnap = await get(ref(db, basePath + "/chunk_" + i));
+        if (!chunkSnap.exists()) {
+          throw new Error("Отсутствует чанк " + i);
+        }
+        parts.push(chunkSnap.val());
+        const percent = ((i + 1) / meta.chunks) * 100;
+        setProgress(downloadProgressFill, percent);
+        log(downloadLog, "Прочитан чанк " + (i + 1) + " из " + meta.chunks);
+      }
+
+      log(downloadLog, "Сборка base64...");
+      const base64 = parts.join("");
+      let bytes = base64ToBytes(base64);
+
+      if (meta.compressed) {
+        log(downloadLog, "Распаковка gzip...");
+        bytes = await decompressBytes(bytes);
+      } else {
+        log(downloadLog, "Файл без сжатия, распаковка не требуется");
+      }
+
+      log(downloadLog, "Формирование файла...");
+      const blob = new Blob([bytes], {
+        type: meta.type || "application/octet-stream"
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = meta.name || "shnuk_file";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+      log(downloadLog, "Готово. Размер: " + bytes.length + " байт");
+      setProgress(downloadProgressFill, 100);
+    } catch (error) {
+      log(downloadLog, "Ошибка: " + (error && error.message ? error.message : String(error)));
+      setProgress(downloadProgressFill, 0);
+    } finally {
+      downloadBtn.disabled = false;
+    }
+  });
+
+  init();
+</script>
+</body>
+</html>
